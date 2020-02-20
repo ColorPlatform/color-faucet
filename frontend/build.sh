@@ -11,7 +11,8 @@ elif [ "$1" = "production" ]
 then
   echo Building wallet with production Enviorment
 
-  NODE_ENV=production VUE_APP_CHAIN=color-mainbeta-2 VUE_APP_CLAIM_URL=https://getcoins.mainbeta-2.color-platform.org/claim yarn build
+  # NODE_ENV=production VUE_APP_CHAIN=color-mainbeta-2 VUE_APP_CLAIM_URL=https://getcoins.mainbeta-2.color-platform.org/claim yarn build
+  NODE_ENV=production yarn build
 else 
   echo Environment not provided, e.g staging
 fi
