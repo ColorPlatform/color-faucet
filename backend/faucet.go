@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/http"
 	"os"
 	"os/exec"
@@ -26,11 +27,11 @@ var amountSteak string
 var key string
 var pass string
 var node string
-var publicUrl string
+var publicURL string
 var faucetHome string
 var fees string
 
-type claim_struct struct {
+type claimStruct struct {
 	Address  string
 	Response string
 }
@@ -51,6 +52,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
+	rand.Seed(time.Now().UnixNano())
+
 	chain = getEnv("FAUCET_CHAIN")
 	recaptchaSecretKey = getEnv("FAUCET_RECAPTCHA_SECRET_KEY")
 	amountFaucet = getEnv("FAUCET_AMOUNT_FAUCET")
@@ -58,7 +61,7 @@ func main() {
 	key = getEnv("FAUCET_KEY")
 	pass = getEnv("FAUCET_PASS")
 	node = getEnv("FAUCET_NODE")
-	publicUrl = getEnv("FAUCET_PUBLIC_URL")
+	publicURL = getEnv("FAUCET_PUBLIC_URL")
 	faucetHome = getEnv("FAUCET_HOME")
 	fees = getEnv("FAUCET_FEES")
 
@@ -68,7 +71,7 @@ func main() {
 	r.HandleFunc("/claim", getCoinsHandler)
 	r.HandleFunc("/claim/wallet", getWalletCoinsHandler)
 
-	log.Fatal(http.ListenAndServe(publicUrl, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization", "Token"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE"}), handlers.AllowedOrigins([]string{"*"}))(r)))
+	log.Fatal(http.ListenAndServe(publicURL, handlers.CORS(handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization", "Token"}), handlers.AllowedMethods([]string{"GET", "POST", "PUT", "HEAD", "OPTIONS", "DELETE"}), handlers.AllowedOrigins([]string{"*"}))(r)))
 
 }
 
@@ -101,7 +104,7 @@ func getCmd(command string) *exec.Cmd {
 }
 
 func getCoinsHandler(w http.ResponseWriter, request *http.Request) {
-	var claim claim_struct
+	var claim claimStruct
 
 	// decode JSON response from front end
 	decoder := json.NewDecoder(request.Body)
@@ -129,13 +132,15 @@ func getCoinsHandler(w http.ResponseWriter, request *http.Request) {
 		panic(captchaErr)
 	}
 
+	nonce := rand.Uint64()
+
 	// send the coins!
 	if captchaPassed {
 
 		fmt.Println(encodedAddress)
 		txCount += 1
-		sendFaucet := fmt.Sprintf("colorcli tx send %s %s --memo %d --from %s --chain-id %s --fees %s --home %s --node %s",
-			encodedAddress, amountFaucet, txCount, key, chain, fees, faucetHome, node)
+		sendFaucet := fmt.Sprintf("colorcli tx send %s %s --memo %d --from %s --chain-id %s --fees %s --home %s --node %s --nonce %d",
+			encodedAddress, amountFaucet, txCount, key, chain, fees, faucetHome, node, nonce)
 		fmt.Println("Command: ", sendFaucet)
 		fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 		go executeCmd(sendFaucet, "y", pass)
@@ -148,7 +153,7 @@ var (
 )
 
 func getWalletCoinsHandler(w http.ResponseWriter, request *http.Request) {
-	var claim claim_struct
+	var claim claimStruct
 
 	// decode JSON response from front end
 	decoder := json.NewDecoder(request.Body)
@@ -168,9 +173,11 @@ func getWalletCoinsHandler(w http.ResponseWriter, request *http.Request) {
 		panic(encodeErr)
 	}
 
+	nonce := rand.Uint64()
+
 	txCount += 1
-	sendFaucet := fmt.Sprintf("colorcli tx send %s %s --memo %d --from %s --chain-id %s --fees %s --home %s --node %s",
-		 encodedAddress, amountFaucet, txCount, key, chain, fees, faucetHome, node)
+	sendFaucet := fmt.Sprintf("colorcli tx send %s %s --memo %d --from %s --chain-id %s --fees %s --home %s --node %s --nonce %d",
+		encodedAddress, amountFaucet, txCount, key, chain, fees, faucetHome, node, nonce)
 	fmt.Println("Command: ", sendFaucet)
 	fmt.Println(time.Now().UTC().Format(time.RFC3339), encodedAddress, "[1]")
 	go executeCmd(sendFaucet, "y", pass)
