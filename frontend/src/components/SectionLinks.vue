@@ -14,7 +14,7 @@
     list-item(
       href=process.env.EXPLORER_URL
       target="_blank"
-      title="Testnet Explorer")
+      title="Block Scanner")
     list-item(
       href=process.env.WEBSITE_URL
       target="_blank"

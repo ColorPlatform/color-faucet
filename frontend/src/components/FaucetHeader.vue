@@ -1,6 +1,6 @@
 <template lang="pug">
 .section-header
-  h1 Coin Generator for Beta Version of Color Platform Mainnnet
+  h1 Coin Generator for the Release Candidate of Color Platform Mainnnet
   p Hello, colorful person! Use this faucet to get tokens for the #[span.chain {{ config.chain }}] network. Please don't abuse this service&mdash;the number of available tokens is limited.
 </template>
 
